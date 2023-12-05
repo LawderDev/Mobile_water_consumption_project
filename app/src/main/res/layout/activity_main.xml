@@ -98,7 +98,7 @@
                     app:layout_constraintTop_toTopOf="@+id/animate_bubble">
 
                     <TextView
-                        android:id="@+id/consumption_text"
+                        android:id="@+id/settings_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/consumption"
@@ -154,6 +154,13 @@
                 android:text="@string/monitoring_of_consumption"
                 android:textAlignment="center"
                 android:textSize="21.38sp" />
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/chart1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@+id/seekBar1" />
+
         </LinearLayout>
     </LinearLayout>
 
