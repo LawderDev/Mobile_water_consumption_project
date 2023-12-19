@@ -18,6 +18,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
+import com.example.water_consumption_project.Controllers.ConsumptionController;
+import com.example.water_consumption_project.Controllers.ReminderController;
+import com.example.water_consumption_project.Controllers.UserController;
+import com.example.water_consumption_project.DataBase.DBWaterConsumption;
+import com.example.water_consumption_project.Models.Consumption;
+import com.example.water_consumption_project.Models.Reminder;
+import com.example.water_consumption_project.Models.User;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.LimitLine;
@@ -27,7 +34,11 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,13 +47,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        stylizingApp();
 
-        // Get the TextView
-        TextView welcomeText = findViewById(R.id.welcome_user_text);
-        TextView monitoringConsumptionText = findViewById(R.id.monitoring_consumption_text);
+        UserController userController = new UserController(this);
+        ConsumptionController consumptionController = new ConsumptionController(this);
+        ReminderController reminderController = new ReminderController(this);
 
-        applyTextBold(welcomeText, R.string.welcome_user, 8, 12);
-        applyTextBold(monitoringConsumptionText, R.string.monitoring_of_consumption, 14, 25);
+        userController.open();
+        User user = userController.getFirstUser();
+
+        if(user == null) {
+            userController.insertUser("User", 2000);
+            user = userController.getFirstUser();
+        }
+
+        userController.close();
+
+        // Changer nom utilisateur
 
         Button drinkButton = findViewById(R.id.drink_button);
         ImageButton menuButton = findViewById(R.id.menu_button);
@@ -52,9 +73,24 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        User finalUser = user;
         drinkButton.setOnClickListener((v) -> {
+            long date = System.currentTimeMillis();
+
+            consumptionController.insertConsumption(finalUser.getId(), date, 300);
             Toast.makeText(this, "DRINK !", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDate(date).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
         });
+
+    }
+
+    private void stylizingApp () {
+        // Get the TextView
+        TextView welcomeText = findViewById(R.id.welcome_user_text);
+        TextView monitoringConsumptionText = findViewById(R.id.monitoring_consumption_text);
+
+        applyTextBold(welcomeText, R.string.welcome_user, 8, 12);
+        applyTextBold(monitoringConsumptionText, R.string.monitoring_of_consumption, 14, 25);
 
         BarChart barChart = findViewById(R.id.chart1);
 
