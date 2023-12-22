@@ -3,14 +3,12 @@ package com.example.water_consumption_project.Controllers;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
 import com.example.water_consumption_project.DataBase.DBWaterConsumption;
 import com.example.water_consumption_project.Models.Consumption;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class ConsumptionController extends DBWaterConsumption {
@@ -28,23 +26,24 @@ public class ConsumptionController extends DBWaterConsumption {
         return db.insert("Consumption", null, values);
     }
 
-    public List<Consumption> getConsumptionsByDate(long date) {
-       /* Date currentDate = new Date(date);
+    /* Date currentDate = new Date(date);
 
-        // Utilisation de Calendar pour extraire l'année, le mois et le jour
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentDate);
+ // Utilisation de Calendar pour extraire l'année, le mois et le jour
+ Calendar calendar = Calendar.getInstance();
+ calendar.setTime(currentDate);
 
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1; // Les mois commencent à partir de zéro
-        int day = calendar.get(Calendar.DAY_OF_MONTH);*/
+ int year = calendar.get(Calendar.YEAR);
+ int month = calendar.get(Calendar.MONTH) + 1; // Les mois commencent à partir de zéro
+ int day = calendar.get(Calendar.DAY_OF_MONTH);*/
+    public List<Consumption> getConsumptionsByDateAndUser(long date, int idUser) {
+        //date est un timestamp
         String[] attributes = new String[]{"id", "idUser", "date", "currentConsumption"};
-        String[] whereTab = new String[]{String.valueOf(date)};
+        String[] whereTab = new String[]{String.valueOf(getBeginDate(date)), String.valueOf(getEndDate(date)), String.valueOf(idUser)};
 
         Cursor cursor = db.query(
                 "Consumption",
                 attributes,
-                "date = ?",
+                "date BETWEEN ? AND ? AND idUser = ?",
                 whereTab,
                 null,
                 null,
@@ -53,11 +52,44 @@ public class ConsumptionController extends DBWaterConsumption {
         return cursorToConsumptions(cursor);
     }
 
+    private long getBeginDate(long date) {
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTimeInMillis(date);
+        setTimeToMidnight(calendar);
+
+        return calendar.getTimeInMillis();
+    }
+
+    private long getEndDate(long date) {
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTimeInMillis(date);
+        setTimeToLastMillisecond(calendar);
+
+        return calendar.getTimeInMillis();
+    }
+
+    private void setTimeToHour(Calendar calendar, int hour, int min, int sec, int ms) {
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, min);
+        calendar.set(Calendar.SECOND, sec);
+        calendar.set(Calendar.MILLISECOND, ms);
+    }
+
+    private void setTimeToMidnight(Calendar calendar) {
+        setTimeToHour(calendar,0,0,0,0);
+    }
+
+    private void setTimeToLastMillisecond(Calendar calendar) {
+        setTimeToHour(calendar, 23, 59,59,999);
+    }
+
     private List<Consumption> cursorToConsumptions(Cursor cursor) {
         List<Consumption> consumptions = new ArrayList<>();
 
         if (cursor.getCount() == 0 || !cursor.moveToFirst())
-            return null;
+            return consumptions;
 
         do {
             int idCursor = cursor.getColumnIndex("id");

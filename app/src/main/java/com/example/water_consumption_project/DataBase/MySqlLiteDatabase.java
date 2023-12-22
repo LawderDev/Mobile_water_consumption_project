@@ -26,7 +26,7 @@ public class MySqlLiteDatabase extends SQLiteOpenHelper {
                     "date" + " LONG, " +
                     "currentConsumption" + " INTEGER);";
 
-    public MySqlLiteDatabase(Context context, String name, SQLiteDatabase.CursorFactory factory, int version){
+    public MySqlLiteDatabase(Context                         context, String name, SQLiteDatabase.CursorFactory factory, int version){
         super(context, name, factory, version);
     }
 

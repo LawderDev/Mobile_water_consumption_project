@@ -9,6 +9,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.TypefaceSpan;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -21,9 +22,7 @@ import androidx.core.content.res.ResourcesCompat;
 import com.example.water_consumption_project.Controllers.ConsumptionController;
 import com.example.water_consumption_project.Controllers.ReminderController;
 import com.example.water_consumption_project.Controllers.UserController;
-import com.example.water_consumption_project.DataBase.DBWaterConsumption;
 import com.example.water_consumption_project.Models.Consumption;
-import com.example.water_consumption_project.Models.Reminder;
 import com.example.water_consumption_project.Models.User;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -34,27 +33,28 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private ConsumptionController consumptionController;
+    private UserController userController;
+    private ReminderController reminderController;
+    private User user;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getApplicationContext().deleteDatabase("db_water_consumption");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         stylizingApp();
 
-        UserController userController = new UserController(this);
-        ConsumptionController consumptionController = new ConsumptionController(this);
-        ReminderController reminderController = new ReminderController(this);
+        userController = new UserController(this);
+        consumptionController = new ConsumptionController(this);
+        reminderController = new ReminderController(this);
 
         userController.open();
-        User user = userController.getFirstUser();
+        user = userController.getFirstUser();
 
         if(user == null) {
             userController.insertUser("User", 2000);
@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         userController.close();
+
+        initInformation();
 
         // Changer nom utilisateur
 
@@ -73,15 +75,35 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        User finalUser = user;
         drinkButton.setOnClickListener((v) -> {
             long date = System.currentTimeMillis();
-
-            consumptionController.insertConsumption(finalUser.getId(), date, 300);
+            consumptionController.open();
+            consumptionController.insertConsumption(user.getId(), date, 300);
             Toast.makeText(this, "DRINK !", Toast.LENGTH_LONG).show();
-            Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDate(date).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDateAndUser(date, user.getId()).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
+            consumptionController.close();
+            initInformation();
         });
 
+    }
+
+    private void initInformation() {
+        TextView currentConsumptionText = findViewById(R.id.consumption_text);
+        TextView targetConsumptionText = findViewById(R.id.target_text);
+
+        currentConsumptionText.setText(getCurrentConsumption() + " ml");
+        targetConsumptionText.setText("/ " +user.getTargetConsumption() + " ml");
+    }
+
+    private int getCurrentConsumption(){
+        consumptionController.open();
+        List<Consumption> consumptions =  consumptionController.getConsumptionsByDateAndUser(System.currentTimeMillis(), user.getId());
+        consumptionController.close();
+        int consumptionValue = 0;
+        for(Consumption consumption : consumptions){
+            consumptionValue += consumption.getCurrentConsumption();
+        }
+        return consumptionValue;
     }
 
     private void stylizingApp () {
