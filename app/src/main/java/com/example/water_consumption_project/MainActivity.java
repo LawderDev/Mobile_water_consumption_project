@@ -1,10 +1,12 @@
 package com.example.water_consumption_project;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -81,28 +83,48 @@ public class MainActivity extends AppCompatActivity {
         });
 
         drinkButton.setOnClickListener((v) -> {
-            long date = System.currentTimeMillis();
-            consumptionController.open();
-            consumptionController.insertConsumption(user.getId(), date, 300);
-            Toast.makeText(this, "DRINK !", Toast.LENGTH_LONG).show();
-            Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDateAndUser(date, user.getId()).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
-            consumptionController.close();
-            refreshCurrentConsumptionText();
+                long date = System.currentTimeMillis();
+                consumptionController.open();
+                consumptionController.insertConsumption(user.getId(), date, 300);
+                Toast.makeText(this, "DRINK !", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDateAndUser(date, user.getId()).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
+                consumptionController.close();
+                refreshCurrentConsumptionText();
         });
 
     }
 
     private void initConsumptionsText() {
-        refreshCurrentConsumptionText();
+        currentConsumptionText.setText(String.format(getString(R.string.consumption), 0));
         refreshTargetConsumptionText();
     }
 
+    private void refreshCurrentConsumptionTextAnimation(int current, int target) {
+        ValueAnimator animator = ValueAnimator.ofInt(current, target);
+        animator.setDuration(1000);
+
+        animator.addUpdateListener(animation -> {
+            int animatedValue = (int) animation.getAnimatedValue();
+            String newText = String.format(getString(R.string.consumption), animatedValue);
+            currentConsumptionText.setText(newText);
+        });
+
+        animator.start();
+    }
+
+
     private void refreshCurrentConsumptionText(){
-        currentConsumptionText.setText(getCurrentConsumption() + " ml");
+        int consumptionValue = getCurrentConsumption();
+        String currentConsumptionValueText = currentConsumptionText.getText().toString();
+        Log.d("ENTER", currentConsumptionValueText);
+
+        int currentConsumptionValue = Integer.parseInt(currentConsumptionValueText.split(" ")[0]);
+        refreshCurrentConsumptionTextAnimation(currentConsumptionValue, consumptionValue);
     }
 
     private void refreshTargetConsumptionText(){
-        targetConsumptionText.setText("/ " + user.getTargetConsumption() + " ml");
+        String newText = String.format(getString(R.string.target), user.getTargetConsumption());
+        targetConsumptionText.setText(newText);
     }
 
     private int getCurrentConsumption(){
