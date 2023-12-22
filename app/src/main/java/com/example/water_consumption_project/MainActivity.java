@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private UserController userController;
     private ReminderController reminderController;
     private User user;
+    private TextView targetConsumptionText;
+    private TextView currentConsumptionText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         getApplicationContext().deleteDatabase("db_water_consumption");
@@ -63,7 +65,10 @@ public class MainActivity extends AppCompatActivity {
 
         userController.close();
 
-        initInformation();
+        currentConsumptionText = findViewById(R.id.consumption_text);
+        targetConsumptionText = findViewById(R.id.target_text);
+
+        initConsumptionsText();
 
         // Changer nom utilisateur
 
@@ -82,17 +87,22 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "DRINK !", Toast.LENGTH_LONG).show();
             Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDateAndUser(date, user.getId()).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
             consumptionController.close();
-            initInformation();
+            refreshCurrentConsumptionText();
         });
 
     }
 
-    private void initInformation() {
-        TextView currentConsumptionText = findViewById(R.id.consumption_text);
-        TextView targetConsumptionText = findViewById(R.id.target_text);
+    private void initConsumptionsText() {
+        refreshCurrentConsumptionText();
+        refreshTargetConsumptionText();
+    }
 
+    private void refreshCurrentConsumptionText(){
         currentConsumptionText.setText(getCurrentConsumption() + " ml");
-        targetConsumptionText.setText("/ " +user.getTargetConsumption() + " ml");
+    }
+
+    private void refreshTargetConsumptionText(){
+        targetConsumptionText.setText("/ " + user.getTargetConsumption() + " ml");
     }
 
     private int getCurrentConsumption(){
