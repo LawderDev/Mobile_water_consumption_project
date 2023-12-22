@@ -1,5 +1,10 @@
 package com.example.water_consumption_project;
 
+import static java.util.Calendar.DAY_OF_WEEK;
+import static java.util.Calendar.LONG;
+import static java.util.Calendar.SHORT;
+import static java.util.Calendar.TUESDAY;
+
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Color;
@@ -30,13 +35,17 @@ import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,12 +55,13 @@ public class MainActivity extends AppCompatActivity {
     private User user;
     private TextView targetConsumptionText;
     private TextView currentConsumptionText;
+    private BarChart barChart;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         getApplicationContext().deleteDatabase("db_water_consumption");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        stylizingApp();
+
 
         userController = new UserController(this);
         consumptionController = new ConsumptionController(this);
@@ -70,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         currentConsumptionText = findViewById(R.id.consumption_text);
         targetConsumptionText = findViewById(R.id.target_text);
 
+        stylizingApp();
         initConsumptionsText();
 
         // Changer nom utilisateur
@@ -90,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, String.valueOf(consumptionController.getConsumptionsByDateAndUser(date, user.getId()).get(0).getCurrentConsumption()), Toast.LENGTH_LONG).show();
                 consumptionController.close();
                 refreshCurrentConsumptionText();
+                refreshBarChart();
         });
 
     }
@@ -114,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void refreshCurrentConsumptionText(){
-        int consumptionValue = getCurrentConsumption();
+        int consumptionValue = getConsumptionValueByDate(System.currentTimeMillis());
         String currentConsumptionValueText = currentConsumptionText.getText().toString();
         Log.d("ENTER", currentConsumptionValueText);
 
@@ -127,9 +139,9 @@ public class MainActivity extends AppCompatActivity {
         targetConsumptionText.setText(newText);
     }
 
-    private int getCurrentConsumption(){
+    private int getConsumptionValueByDate(long timestamp){
         consumptionController.open();
-        List<Consumption> consumptions =  consumptionController.getConsumptionsByDateAndUser(System.currentTimeMillis(), user.getId());
+        List<Consumption> consumptions =  consumptionController.getConsumptionsByDateAndUser(timestamp, user.getId());
         consumptionController.close();
         int consumptionValue = 0;
         for(Consumption consumption : consumptions){
@@ -146,39 +158,66 @@ public class MainActivity extends AppCompatActivity {
         applyTextBold(welcomeText, R.string.welcome_user, 8, 12);
         applyTextBold(monitoringConsumptionText, R.string.monitoring_of_consumption, 14, 25);
 
-        BarChart barChart = findViewById(R.id.chart1);
 
+        barChart = findViewById(R.id.chart1);
+
+        refreshBarChart();
+    }
+
+    private void refreshBarChart(){
         // Sample data (replace this with your actual data)
         List<BarEntry> dayEntries = getListDay();
 
         BarData barData = new BarData(setupBarDataSet(dayEntries));
 
         // Customize X-axis
-        setupXAxis(barChart);
+        setupXAxis();
 
-        setupBarChart(barChart, barData);
+        setupBarChart(barData);
+    }
+
+    private long[] getSevenLastDays() {
+        Calendar calendar = Calendar.getInstance();
+
+        long currentTime = System.currentTimeMillis();
+
+        // Créez un tableau pour stocker les timestamps des 6 derniers jours
+        long[] timestamps = new long[7];
+        for (int i = 0; i < 6; i++) {
+            calendar.setTimeInMillis(currentTime);
+            calendar.add(Calendar.DAY_OF_MONTH, -i);
+            timestamps[i] = calendar.getTimeInMillis();
+        }
+
+        // Ajoutez le timestamp de la date actuelle à la dernière position du tableau
+        timestamps[6] = currentTime;
+
+        return timestamps;
     }
 
     private List<BarEntry> getListDay() {
         List<BarEntry> entries = new ArrayList<>();
-        entries.add(new BarEntry(1, 10f));
-        entries.add(new BarEntry(2, 15f));
-        entries.add(new BarEntry(3, 20f));
-        entries.add(new BarEntry(4, 12f));
-        entries.add(new BarEntry(5, 25f));
-        entries.add(new BarEntry(6, 25f));
-        entries.add(new BarEntry(7, 25f));
+        long[] sevenLastDays = getSevenLastDays();
+        for (int i = 0; i < sevenLastDays.length; i++) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(sevenLastDays[i]);
+            entries.add(new BarEntry(calendar.get(DAY_OF_WEEK), getConsumptionValueByDate(sevenLastDays[i])));
+        }
         return entries;
     }
 
-    private void setupXAxis(BarChart barChart){
+    private void setupXAxis(){
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
+        long[] sevenLastDays = getSevenLastDays();
+
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
-                return "Day " + (int) value;
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(sevenLastDays[(int) value]);
+                return calendar.getDisplayName(DAY_OF_WEEK, SHORT, Locale.US);
             }
         });
     }
@@ -189,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
         return barDataSet;
     }
 
-    private void addGoalLimitLine(BarChart barChart, float goal) {
+    private void addGoalLimitLine(float goal) {
         LimitLine limitLine = new LimitLine(goal, "Goal");
         limitLine.setLineColor(Color.RED);
         limitLine.setLineWidth(2f);
@@ -200,16 +239,21 @@ public class MainActivity extends AppCompatActivity {
         barChart.getAxisLeft().addLimitLine(limitLine);
     }
 
-    private void setupBarChart(BarChart barChart, BarData barData){
+    private void setupBarChart(BarData barData){
+        float goalConsumption = user.getTargetConsumption();
         barChart.setData(barData);
-        barChart.getDescription().setText("Water Consumption by Day");
         barChart.setFitBars(true);
         barChart.animateY(1500);
+        float maxYRange = barChart.getYMax();
+
+        if(maxYRange < goalConsumption * 1.5f){
+            barChart.setVisibleYRange(0, goalConsumption * 1.5f, YAxis.AxisDependency.LEFT);
+        }
+
         barChart.invalidate();
 
         // Ajoutez la ligne de limite avec l'objectif de consommation
-        float goalConsumption = 18f; // Remplacez ceci par votre objectif de consommation
-        addGoalLimitLine(barChart, goalConsumption);
+        addGoalLimitLine(goalConsumption);
     }
 
     private void applyTextBold(TextView textView, int textResId, int start, int end) {
