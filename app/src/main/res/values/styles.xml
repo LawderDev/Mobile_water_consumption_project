@@ -8,4 +8,8 @@
     <style name="circularShape">
         <item name="cornerSize">50%</item>
     </style>
+
+    <style name="CustomAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog</item>
+    </style>
 </resources>

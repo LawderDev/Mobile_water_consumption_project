@@ -7,4 +7,5 @@
     <string name="target">/ %1$d ml</string>
     <string name="water_is_your_new_best_friend">\"Water is your new best friend !\"</string>
     <string name="welcome_user">Welcome User !</string>
+    <string name="menu_target_value">%1$d ml</string>
 </resources>

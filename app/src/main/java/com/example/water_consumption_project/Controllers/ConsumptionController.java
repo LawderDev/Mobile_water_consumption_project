@@ -22,19 +22,9 @@ public class ConsumptionController extends DBWaterConsumption {
         values.put("idUser", idUser);
         values.put("date", date);
         values.put("currentConsumption", currentConsumption);
-        // !!!!! Remove and relauch database because of type mistake
         return db.insert("Consumption", null, values);
     }
 
-    /* Date currentDate = new Date(date);
-
- // Utilisation de Calendar pour extraire l'année, le mois et le jour
- Calendar calendar = Calendar.getInstance();
- calendar.setTime(currentDate);
-
- int year = calendar.get(Calendar.YEAR);
- int month = calendar.get(Calendar.MONTH) + 1; // Les mois commencent à partir de zéro
- int day = calendar.get(Calendar.DAY_OF_MONTH);*/
     public List<Consumption> getConsumptionsByDateAndUser(long date, int idUser) {
         //date est un timestamp
         String[] attributes = new String[]{"id", "idUser", "date", "currentConsumption"};
@@ -68,6 +58,15 @@ public class ConsumptionController extends DBWaterConsumption {
         setTimeToLastMillisecond(calendar);
 
         return calendar.getTimeInMillis();
+    }
+
+    public int getConsumptionValueByDateAndUser(long timestamp, int idUser){
+        List<Consumption> consumptions = getConsumptionsByDateAndUser(timestamp, idUser);
+        int consumptionValue = 0;
+        for(Consumption consumption : consumptions){
+            consumptionValue += consumption.getCurrentConsumption();
+        }
+        return consumptionValue;
     }
 
     private void setTimeToHour(Calendar calendar, int hour, int min, int sec, int ms) {
