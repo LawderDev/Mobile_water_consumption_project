@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.water_consumption_project.Controllers.ConsumptionController;
 import com.example.water_consumption_project.Controllers.ReminderController;
 import com.example.water_consumption_project.DataBase.DBManagement;
@@ -52,9 +53,17 @@ public class MainActivity extends AppCompatActivity {
 
         manageDialogDrink();
         manageMenuButton();
+        manageNotificationsButton();
         manageDrinkButton();
     }
 
+    private void manageNotificationsButton(){
+        LottieAnimationView notificationButton = findViewById(R.id.bell_button);
+        notificationButton.setOnClickListener((v) -> {
+            Intent intent = new Intent(MainActivity.this, NotificationsActivity.class);
+           startActivity(intent);
+        });
+    }
 
     private void manageDialogDrink(){
         dialog = new DrinkDialog(MainActivity.this, user.getId(), consumptionController, currentConsumptionText, mainActivityStyle, dayHistogram);
