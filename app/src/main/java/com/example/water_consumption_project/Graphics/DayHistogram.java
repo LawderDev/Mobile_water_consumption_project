@@ -29,13 +29,20 @@ public class DayHistogram {
     BarChart barChart;
     long[] sevenLastDays;
     ConsumptionController consumptionController;
+    DBManagement dbManagement;
     User user;
     public DayHistogram(BarChart barChart, Context context){
         this.barChart = barChart;
         this.sevenLastDays = getSevenLastDays();
-        DBManagement dbManagement = DBManagement.getInstance(context);
+        dbManagement = DBManagement.getInstance(context);
         this.consumptionController = dbManagement.getConsumptionController();
         this.user = dbManagement.getUser();
+    }
+
+    public void reloadDayHistogram(){
+        this.user = dbManagement.getUser();
+        this.barChart.getAxisLeft().removeAllLimitLines();
+        refreshBarChart();
     }
 
     public void refreshBarChart(){

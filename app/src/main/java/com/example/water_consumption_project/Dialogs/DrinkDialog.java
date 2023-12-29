@@ -11,39 +11,31 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.water_consumption_project.Controllers.ConsumptionController;
-import com.example.water_consumption_project.DataBase.DBManagement;
 import com.example.water_consumption_project.Graphics.DayHistogram;
-import com.example.water_consumption_project.MainActivity;
-import com.example.water_consumption_project.Models.User;
 import com.example.water_consumption_project.R;
 import com.example.water_consumption_project.Styles.MainActivityStyle;
 
-import org.w3c.dom.Text;
-
 public class DrinkDialog extends Dialog implements View.OnClickListener
 {
-    private Activity context;
-    private int userId;
+    private final int userId;
     private EditText drinkValueText;
-    private ConsumptionController consumptionController;
+    private final ConsumptionController consumptionController;
 
-    private Button drinkButton, removeButton, closeButton;
+    private final TextView currentConsumptionText;
+    private final MainActivityStyle mainActivityStyle;
 
-    private TextView currentConsumptionText;
-    private MainActivityStyle mainActivityStyle;
-
-    private DayHistogram dayHistogram;
+    private final DayHistogram dayHistogram;
 
 
     public DrinkDialog(Activity activity, int userId, ConsumptionController consumptionController, TextView currentConsumptionText, MainActivityStyle mainActivityStyle, DayHistogram dayHistogram) {
         super(activity);
-        this.context = activity;
         this.userId = userId;
         this.consumptionController = consumptionController;
         this.currentConsumptionText = currentConsumptionText;
         this.mainActivityStyle = mainActivityStyle;
         this.dayHistogram = dayHistogram;
     }
+
 
     private void refreshCurrentConsumptionText(){
         int consumptionValue = consumptionController.getConsumptionValueByDateAndUser(System.currentTimeMillis(), userId);
@@ -60,10 +52,10 @@ public class DrinkDialog extends Dialog implements View.OnClickListener
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.drink_dialog);
-        drinkButton = (Button) findViewById(R.id.btn_drink);
-        removeButton = (Button) findViewById(R.id.btn_remove);
-        closeButton = (Button) findViewById(R.id.btn_close);
-        drinkValueText = findViewById(R.id.drink_value);
+        Button drinkButton = (Button) findViewById(R.id.btn_edit);
+        Button removeButton = (Button) findViewById(R.id.btn_remove);
+        Button closeButton = (Button) findViewById(R.id.btn_close);
+        drinkValueText = findViewById(R.id.target_settings_value);
         drinkButton.setOnClickListener(this);
         removeButton.setOnClickListener(this);
         closeButton.setOnClickListener(this);
@@ -92,9 +84,9 @@ public class DrinkDialog extends Dialog implements View.OnClickListener
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        if (id == R.id.btn_drink || id == R.id.btn_remove ){
+        if (id == R.id.btn_edit || id == R.id.btn_remove ){
             consumptionController.open();
-           handleDrink(id == R.id.btn_drink);
+           handleDrink(id == R.id.btn_edit);
             consumptionController.close();
            handleClose();
         } else if (id == R.id.btn_close) {

@@ -1,15 +1,15 @@
 package com.example.water_consumption_project;
-
-import android.animation.ValueAnimator;
-import android.content.DialogInterface;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.water_consumption_project.Controllers.ConsumptionController;
@@ -17,13 +17,8 @@ import com.example.water_consumption_project.Controllers.ReminderController;
 import com.example.water_consumption_project.DataBase.DBManagement;
 import com.example.water_consumption_project.Dialogs.DrinkDialog;
 import com.example.water_consumption_project.Graphics.DayHistogram;
-import com.example.water_consumption_project.Models.Consumption;
 import com.example.water_consumption_project.Models.User;
 import com.example.water_consumption_project.Styles.MainActivityStyle;
-import com.github.mikephil.charting.charts.BarChart;
-
-import java.util.Calendar;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private User user;
     private TextView targetConsumptionText;
     private TextView currentConsumptionText;
+    DBManagement dbManagement;
     private DayHistogram dayHistogram;
     DrinkDialog dialog;
 
@@ -59,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         manageDrinkButton();
     }
 
+
     private void manageDialogDrink(){
         dialog = new DrinkDialog(MainActivity.this, user.getId(), consumptionController, currentConsumptionText, mainActivityStyle, dayHistogram);
     }
@@ -69,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initControllersAndUser(){
-        DBManagement dbManagement = DBManagement.getInstance(this);
+        dbManagement = DBManagement.getInstance(this);
         consumptionController = dbManagement.getConsumptionController();
         reminderController = dbManagement.getReminderController();
         user = dbManagement.getUser();
@@ -80,15 +77,26 @@ public class MainActivity extends AppCompatActivity {
         refreshTargetConsumptionText();
     }
 
-
-
     private void manageMenuButton(){
         ImageButton menuButton = findViewById(R.id.menu_button);
         menuButton.setOnClickListener((v) -> {
             Intent intent = new Intent(MainActivity.this, MenuActivity.class);
-            startActivity(intent);
+            someActivityResultLauncher.launch(intent);
         });
     }
+
+    ActivityResultLauncher<Intent> someActivityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        user = dbManagement.getUser();
+                        refreshTargetConsumptionText();
+                        dayHistogram.reloadDayHistogram();
+                    }
+                }
+            });
 
     private void manageDrinkButton(){
         Button drinkButton = findViewById(R.id.drink_button);

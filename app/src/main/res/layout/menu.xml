@@ -94,7 +94,7 @@
                 android:textSize="21.38sp" />
 
             <TextView
-                android:id="@+id/target_value"
+                android:id="@+id/target_settings_value"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="4dp"

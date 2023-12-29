@@ -14,7 +14,7 @@ public class DBManagement {
     private final ReminderController reminderController;
     private final ConsumptionController consumptionController;
 
-    private final User user;
+    private User user;
 
     protected DBManagement(Context context){
         this.userController = new UserController(context);
@@ -23,16 +23,21 @@ public class DBManagement {
         this.user = getFirstUser();
     }
 
-    private User getFirstUser(){
+    public User getFirstUser(){
         userController.open();
         User retrievingUser = null;
         if(this.user == null) {
             userController.insertUser("User", 2000);
-            retrievingUser = userController.getFirstUser();
         }
+
+        retrievingUser = userController.getFirstUser();
 
         userController.close();
         return retrievingUser;
+    }
+
+    public void updateUser(){
+        this.user = getFirstUser();
     }
 
     public static DBManagement getInstance(Context context){
