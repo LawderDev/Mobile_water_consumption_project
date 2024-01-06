@@ -17,7 +17,7 @@ public class ReminderController extends DBWaterConsumption {
         super(context);
     }
 
-    public long insertReminder(int idUser, int hour, int date) {
+    public long insertReminder(int idUser, String hour) {
         ContentValues values = new ContentValues();
         values.put("idUser", idUser);
         values.put("hour", hour);
@@ -44,7 +44,7 @@ public class ReminderController extends DBWaterConsumption {
         List<Reminder> reminders = new ArrayList<>();
 
         if (cursor.getCount() == 0 || !cursor.moveToFirst())
-            return null;
+            return reminders;
 
         do {
             int idCursor = cursor.getColumnIndex("id");
@@ -55,7 +55,7 @@ public class ReminderController extends DBWaterConsumption {
 
             int id = cursor.getInt(idCursor);
             int idUser = cursor.getInt(idUserCursor);
-            int hour = cursor.getInt(hourCursor);
+            String hour = cursor.getString(hourCursor);
 
             Reminder reminder = new Reminder(id, idUser, hour);
 

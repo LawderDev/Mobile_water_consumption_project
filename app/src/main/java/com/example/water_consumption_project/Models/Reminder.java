@@ -5,9 +5,9 @@ import java.util.Date;
 public class Reminder {
     private int id;
     private int idUser;
-    private int hour;
+    private String hour;
 
-    public Reminder(int id, int idUser, int hour){
+    public Reminder(int id, int idUser, String hour){
         this.id = id;
         this.idUser = idUser;
         this.hour = hour;
@@ -21,7 +21,7 @@ public class Reminder {
         return idUser;
     }
 
-    public int getHour(){
+    public String getHour(){
         return hour;
     }
 }

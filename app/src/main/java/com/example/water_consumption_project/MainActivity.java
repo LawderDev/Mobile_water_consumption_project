@@ -1,6 +1,14 @@
 package com.example.water_consumption_project;
+
+import static android.icu.number.NumberRangeFormatter.with;
+
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -11,6 +19,14 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.work.Constraints;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.example.water_consumption_project.Controllers.ConsumptionController;
@@ -19,7 +35,11 @@ import com.example.water_consumption_project.DataBase.DBManagement;
 import com.example.water_consumption_project.Dialogs.DrinkDialog;
 import com.example.water_consumption_project.Graphics.DayHistogram;
 import com.example.water_consumption_project.Models.User;
+import com.example.water_consumption_project.Services.NotificationService;
 import com.example.water_consumption_project.Styles.MainActivityStyle;
+
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,13 +53,19 @@ public class MainActivity extends AppCompatActivity {
     DrinkDialog dialog;
 
     MainActivityStyle mainActivityStyle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //TO DELETE AT THE END
         getApplicationContext().deleteDatabase("db_water_consumption");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         initControllersAndUser();
+
+        reminderController.open();
+        reminderController.insertReminder(user.getId(), "18h15");
+        reminderController.close();
 
         initGlobalTextViews();
 
@@ -55,6 +81,67 @@ public class MainActivity extends AppCompatActivity {
         manageMenuButton();
         manageNotificationsButton();
         manageDrinkButton();
+        scheduleNotificationService();
+    }
+
+    private void scheduleNotificationService() {
+        /*Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        PeriodicWorkRequest periodicWorkRequest =
+                new PeriodicWorkRequest.Builder(NotificationService.class, 1, TimeUnit.HOURS)
+                        .setConstraints(constraints)
+                        .build();
+
+        WorkManager workManager = WorkManager.getInstance(this);
+        workManager.enqueue(periodicWorkRequest);*/
+
+       /* OneTimeWorkRequest oneTimeWorkRequest =
+                new OneTimeWorkRequest.Builder(NotificationService.class)
+                        .build();
+
+        WorkManager workManager = WorkManager.getInstance(this);
+        workManager.enqueue(oneTimeWorkRequest);*/
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, String.valueOf(1))
+                .setSmallIcon(R.drawable.menu)
+                .setContentTitle("test")
+                .setContentText("test")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "test";
+            String description = "test";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(String.valueOf(1), name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this.
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
+        notificationManager.notify(0, builder.build());
+
     }
 
     private void manageNotificationsButton(){
