@@ -1,107 +1,154 @@
 package com.example.water_consumption_project.Services;
 
-import android.app.Notification;
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
+import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
+import androidx.core.app.NotificationManagerCompat;
 
-import com.example.water_consumption_project.MainActivity;
-import com.example.water_consumption_project.Models.Reminder;
 import com.example.water_consumption_project.Controllers.ReminderController;
 import com.example.water_consumption_project.DataBase.DBManagement;
+import com.example.water_consumption_project.MainActivity;
+import com.example.water_consumption_project.Models.Reminder;
 import com.example.water_consumption_project.Models.User;
 import com.example.water_consumption_project.R;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class NotificationService extends Worker {
+public class NotificationService extends Service {
 
-    public NotificationService(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
+    private NotificationManagerCompat notificationManager;
+    NotificationCompat.Builder builder;
+    private List<String> hours;
+    private List<String> dayHours;
+    private final Handler handler = new Handler();
+    private static boolean runningService = false;
+
+    public static boolean getRunningService() {
+        return runningService;
     }
 
-    @NonNull
-    @Override
-    public Result doWork() {
-        sendNotification();
-        return Result.success();
-        /*try {
-            DBManagement dbManagement = DBManagement.getInstance(getApplicationContext());
-            ReminderController reminderController = dbManagement.getReminderController();
-            User user = dbManagement.getUser();
+    private final Runnable runnable = new Runnable() {
 
-            reminderController.open();
-            List<Reminder> reminders = reminderController.getRemindersByIdUser(user.getId());
-            reminderController.close();
-
-            for (Reminder reminder : reminders) {
-                if (isCurrentTimeToNotify(reminder.getHour())) {
+        @Override
+        public void run() {
+            if(!runningService) return;
+            for (String hour : hours) {
+                if (isCurrentTimeToNotify(hour) && !dayHours.contains(hour)) {
                     sendNotification();
+                    dayHours.add(hour);
                 }
             }
-            return Result.success();
-        } catch (Throwable throwable) {
-            Log.e("NotificationWorker", "Error in doWork: " + throwable.getMessage());
-            return Result.failure();
-        }*/
-    }
+            handler.postDelayed(this, 1000);
+        }
+    };
 
     private boolean isCurrentTimeToNotify(String targetHour) {
         // Comparer l'heure actuelle avec l'heure programmée pour la notification
-        Log.d("GIGANOTIF", targetHour);
-
         Calendar calendar = Calendar.getInstance();
         int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
         int currentMinute = calendar.get(Calendar.MINUTE);
+
         // Formatage de l'heure
         String formattedTime = String.format(Locale.getDefault(), "%dh%02d", currentHour, currentMinute);
-        Log.d("GIGANOTIF", formattedTime);
         return formattedTime.equals(targetHour);
     }
 
-    private void sendNotification() {
-        Log.d("NOTIF", "enter");
-        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+    private void sendNotification(){
+        int notificationId = Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.US).format(new Date()));
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            notificationManager.notify(notificationId,builder.build());
+        }
+    }
 
-        Log.d("GIGANOTIF", "enter1");
-        // Créer un canal de notification (pour Android 8 et supérieur)
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String channelId = "channel01";
+        hours = new ArrayList<>();
+        dayHours = new ArrayList<>();
+
+
+        getRemindersHours();
+        createChannel(channelId);
+        createBuilder(channelId);
+
+        notificationManager = NotificationManagerCompat.from(this);
+
+        runningService = true;
+        handler.postDelayed(runnable, 1000);
+        return flags;
+    }
+
+    private void createChannel(String channelId){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("channel_id", "Nom du canal", NotificationManager.IMPORTANCE_DEFAULT);
+            CharSequence name = "test";
+            String description = "test";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(channelId, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this.
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(channel);
         }
-        Log.d("GIGANOTIF", "enter2");
+    }
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "channel_id")
-                .setContentTitle("Il est l'heure de boire de l'eau")
+    private void createBuilder(String channelId){
+        Intent mainIntent = new Intent(this, MainActivity.class);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, mainIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        builder = new NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.drawable.menu)
-                .setContentText("Restez hydraté pour rester en bonne santé!")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-        Log.d("GIGANOTIF", "enter3");
-        // Intent pour lancer l'activité principale lorsque la notification est cliquée
+                .setContentTitle("Don't forget to drink water !")
+                .setContentText("Keep your good habbits ! ")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+    }
 
-        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+    private void getRemindersHours(){
+        DBManagement dbManagement = DBManagement.getInstance(getApplicationContext());
+        ReminderController reminderController = dbManagement.getReminderController();
+        User user = dbManagement.getUser();
 
-        Log.d("GIGANOTIF", "enter4");
-        PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        Log.d("GIGANOTIF", "enter5");
-        builder.setContentIntent(contentIntent);
+        reminderController.open();
+        List<Reminder> reminders = reminderController.getRemindersByIdUser(user.getId());
+        reminderController.close();
 
-        Log.d("GIGANOTIF", "enter5");
-        // Afficher la notification
-        Notification notification = builder.build();
+        for (Reminder reminder : reminders) {
+            hours.add(reminder.getHour());
+        }
+    }
 
-        notificationManager.notify(1, notification);
-        Log.d("GIGANOTIF", "enter6");
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        runningService = false;
+        builder = null;
+        hours = null;
+        handler.removeCallbacks(runnable);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }
