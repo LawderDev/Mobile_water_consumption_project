@@ -1,10 +1,13 @@
 package com.example.water_consumption_project;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -23,6 +26,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.example.water_consumption_project.Controllers.ConsumptionController;
@@ -30,13 +36,20 @@ import com.example.water_consumption_project.Controllers.ReminderController;
 import com.example.water_consumption_project.DataBase.DBManagement;
 import com.example.water_consumption_project.Dialogs.DrinkDialog;
 import com.example.water_consumption_project.Graphics.DayHistogram;
+import com.example.water_consumption_project.Models.Reminder;
 import com.example.water_consumption_project.Models.User;
+import com.example.water_consumption_project.Services.NotificationAlarmReceiver;
 import com.example.water_consumption_project.Services.NotificationService;
+import com.example.water_consumption_project.Services.NotificationWorker;
 import com.example.water_consumption_project.Styles.MainActivityStyle;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -62,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
         initControllersAndUser();
 
         reminderController.open();
-        reminderController.insertReminder(user.getId(), "16h51");
-        reminderController.insertReminder(user.getId(), "16h52");
-        reminderController.insertReminder(user.getId(), "16h53");
+        reminderController.insertReminder(user.getId(), "23h58");
+        reminderController.insertReminder(user.getId(), "23h59");
+        reminderController.insertReminder(user.getId(), "00h00");
         reminderController.close();
 
         initGlobalTextViews();
@@ -81,45 +94,20 @@ public class MainActivity extends AppCompatActivity {
         manageMenuButton();
         manageNotificationsButton();
         manageDrinkButton();
+        checkPostPermission();
         scheduleNotificationService();
     }
 
+
     private void scheduleNotificationService() {
-        /*Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build();
-
-        PeriodicWorkRequest periodicWorkRequest =
-                new PeriodicWorkRequest.Builder(NotificationService.class, 1, TimeUnit.HOURS)
-                        .setConstraints(constraints)
-                        .build();
-
-        WorkManager workManager = WorkManager.getInstance(this);
-        workManager.enqueue(periodicWorkRequest);*/
-
-       /* OneTimeWorkRequest oneTimeWorkRequest =
-                new OneTimeWorkRequest.Builder(NotificationService.class)
-                        .build();
-
-        WorkManager workManager = WorkManager.getInstance(this);
-        workManager.enqueue(oneTimeWorkRequest);*/
-
-        checkPostPermission();
-
-        Intent intentService = new Intent(this, NotificationService.class);
-
-        if(NotificationService.getRunningService()) stopService(intentService);
-        startService(intentService);
+       NotificationWorker.setWorker(this);
     }
 
     private void checkPostPermission(){
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             Log.d("SHOWNOTIF", "PERMISSION not granted, requesting...");
-
             // Demander la permission à l'utilisateur
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE);
-            }
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE);
         }
     }
 
