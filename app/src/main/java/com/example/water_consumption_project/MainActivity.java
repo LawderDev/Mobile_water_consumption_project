@@ -74,12 +74,6 @@ public class MainActivity extends AppCompatActivity {
 
         initControllersAndUser();
 
-        reminderController.open();
-        reminderController.insertReminder(user.getId(), "23h58");
-        reminderController.insertReminder(user.getId(), "23h59");
-        reminderController.insertReminder(user.getId(), "00h00");
-        reminderController.close();
-
         initGlobalTextViews();
 
         mainActivityStyle = new MainActivityStyle(this);

@@ -74,7 +74,8 @@ public class NotificationWorker extends Worker {
                 .build();
 
         List<Reminder> reminders = getReminders(context);
-
+        if (reminders.isEmpty())
+            return;
         long actualTime = System.currentTimeMillis();
         Long nextTime = getNextTime(reminders, actualTime);
         Log.d("TIME", String.valueOf(actualTime));

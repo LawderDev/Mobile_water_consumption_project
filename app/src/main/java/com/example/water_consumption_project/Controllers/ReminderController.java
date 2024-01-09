@@ -66,4 +66,8 @@ public class ReminderController extends DBWaterConsumption {
 
         return reminders;
     }
+    public void removeReminderById(int id){
+        String[] whereTab = new String[]{String.valueOf(id)};
+        db.delete("Reminder","id = ?", whereTab);
+    }
 }
