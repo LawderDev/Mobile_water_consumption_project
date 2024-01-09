@@ -2,7 +2,7 @@
     <string name="app_name">Water_consumption_project</string>
     <string name="monitoring_of_consumption">Monitoring of consumption :</string>
     <string name="drink">Drink !</string>
-    <string name="next_reminder_in_xh">Next reminder in Xh !</string>
+    <string name="next_reminder_in_xh">Next reminder is at %1$s</string>
     <string name="consumption">%1$d ml</string>
     <string name="target">/ %1$d ml</string>
     <string name="water_is_your_new_best_friend">\"Water is your new best friend !\"</string>

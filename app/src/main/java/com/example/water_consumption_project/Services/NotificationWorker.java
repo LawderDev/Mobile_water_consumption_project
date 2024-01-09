@@ -92,7 +92,7 @@ public class NotificationWorker extends Worker {
     }
 
     @Nullable
-    private static Long getNextTime(List<Reminder> reminders, long actualTime) {
+    public static Long getNextTime(List<Reminder> reminders, long actualTime) {
         long nextTime = Long.MAX_VALUE;
         long firstTime = Long.MAX_VALUE;
 
@@ -133,7 +133,7 @@ public class NotificationWorker extends Worker {
         return reminders;
     }
 
-    private static long getMillisByStringHour(String hour){
+    public static long getMillisByStringHour(String hour){
         String[] splitHour = hour.split("h");
         if(splitHour.length < 2) return 0;
 

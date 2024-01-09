@@ -14,7 +14,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -84,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
         dayHistogram = new DayHistogram(findViewById(R.id.chart1), this);
         dayHistogram.refreshBarChart();
 
+        manageNextReminder();
+
         manageDialogDrink();
         manageMenuButton();
         manageNotificationsButton();
@@ -119,6 +123,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void manageNextReminder(){
+        reminderController.open();
+        List<Reminder> reminderList = reminderController.getRemindersByIdUser(user.getId());
+        reminderController.close();
+        if (reminderList.isEmpty()){
+            TextView nextReminder = findViewById(R.id.reminder_text);
+            nextReminder.setText("There is no reminder set");
+            return;
+        }
+        Long nextTime = NotificationWorker.getNextTime(reminderList,System.currentTimeMillis());
+        if (nextTime==null){
+            return;
+        }
+        String selectedTime = new SimpleDateFormat("HH'h'mm").format(nextTime);
+        TextView nextReminder = findViewById(R.id.reminder_text);
+        String newText = getString(R.string.next_reminder_in_xh, selectedTime);
+        nextReminder.setText(newText);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        manageNextReminder();
+    }
     private void manageNotificationsButton(){
         LottieAnimationView notificationButton = findViewById(R.id.bell_button);
         notificationButton.setOnClickListener((v) -> {
