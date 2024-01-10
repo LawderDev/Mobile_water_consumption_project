@@ -60,7 +60,8 @@
                         android:background="@drawable/button_rounded_gradient"
                         android:src="@drawable/close_white"
                         android:textAllCaps="false"
-                        android:textColor="#FEFEFE" />
+                        android:textColor="#FEFEFE"
+                        android:contentDescription="@string/menu_button" />
 
                 </LinearLayout>
 
@@ -70,7 +71,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="15dp"
                     android:fontFamily="@font/raleway_bold"
-                    android:text="Notifications"
+                    android:text="@string/notifications"
                     android:textColor="#FEFEFEFE"
                     android:textSize="24sp" />
 
@@ -83,10 +84,6 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:gravity="center_horizontal">
-
-            <include
-                layout="@layout/notification_box"
-        />
         </LinearLayout>
 
 

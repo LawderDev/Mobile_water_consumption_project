@@ -17,7 +17,8 @@ public class MySqlLiteDatabase extends SQLiteOpenHelper {
             "CREATE TABLE " + "Reminder" + " (" +
                     "id" + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "idUser" + " INTEGER, " +
-                    "hour" + " TEXT);";
+                    "hour" + " TEXT," +
+                    "isMissing" + " BOOLEAN)";
 
     private final String CREATE_TABLE_CONSUMPTION =
             "CREATE TABLE " + "Consumption" + " (" +

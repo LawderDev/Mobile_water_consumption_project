@@ -3,7 +3,6 @@ package com.example.water_consumption_project.Controllers;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
 import com.example.water_consumption_project.DataBase.DBWaterConsumption;
 import com.example.water_consumption_project.Models.Reminder;
@@ -17,15 +16,16 @@ public class ReminderController extends DBWaterConsumption {
         super(context);
     }
 
-    public long insertReminder(int idUser, String hour) {
+    public void insertReminder(int idUser, String hour, boolean isMissing) {
         ContentValues values = new ContentValues();
         values.put("idUser", idUser);
         values.put("hour", hour);
-        return db.insert("Reminder", null, values);
+        values.put("isMissing", String.valueOf(isMissing));
+        db.insert("Reminder", null, values);
     }
 
     public List<Reminder> getRemindersByIdUser(int idUser) {
-        String[] attributes = new String[]{"id", "idUser", "hour"};
+        String[] attributes = new String[]{"id", "idUser", "hour", "isMissing"};
         String[] whereTab = new String[]{String.valueOf(idUser)};
 
         Cursor cursor = db.query(
@@ -40,6 +40,16 @@ public class ReminderController extends DBWaterConsumption {
         return cursorToReminders(cursor);
     }
 
+    public int updateIsMissingById(int reminderId, boolean isMissing) {
+        ContentValues values = new ContentValues();
+        values.put("isMissing", String.valueOf(isMissing));
+
+        String whereClause = "id=?";
+        String[] whereArgs = {String.valueOf(reminderId)};
+
+        return db.update("Reminder", values, whereClause, whereArgs);
+    }
+
     private List<Reminder> cursorToReminders(Cursor cursor) {
         List<Reminder> reminders = new ArrayList<>();
 
@@ -50,14 +60,16 @@ public class ReminderController extends DBWaterConsumption {
             int idCursor = cursor.getColumnIndex("id");
             int idUserCursor = cursor.getColumnIndex("idUser");
             int hourCursor = cursor.getColumnIndex("hour");
+            int isMissingCursor = cursor.getColumnIndex("isMissing");
 
             if (idCursor < 0 && idUserCursor < 0 && hourCursor < 0) return null;
 
             int id = cursor.getInt(idCursor);
             int idUser = cursor.getInt(idUserCursor);
             String hour = cursor.getString(hourCursor);
+            boolean isMissing = Boolean.parseBoolean(cursor.getString(isMissingCursor));
 
-            Reminder reminder = new Reminder(id, idUser, hour);
+            Reminder reminder = new Reminder(id, idUser, hour, isMissing);
 
             reminders.add(reminder);
         } while (cursor.moveToNext());

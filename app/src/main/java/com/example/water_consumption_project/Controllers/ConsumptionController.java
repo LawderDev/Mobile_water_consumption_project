@@ -26,7 +26,6 @@ public class ConsumptionController extends DBWaterConsumption {
     }
 
     public List<Consumption> getConsumptionsByDateAndUser(long date, int idUser) {
-        //date est un timestamp
         String[] attributes = new String[]{"id", "idUser", "date", "currentConsumption"};
         String[] whereTab = new String[]{String.valueOf(getBeginDate(date)), String.valueOf(getEndDate(date)), String.valueOf(idUser)};
 

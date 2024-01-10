@@ -1,7 +1,5 @@
 package com.example.water_consumption_project.Models;
 
-import java.util.Date;
-
 public class Consumption {
     private int id;
     private int idUser;

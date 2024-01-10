@@ -40,14 +40,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/raleway_bold"
-                    android:text="Notification de XhXX" />
+                    android:text="@string/reminder_of" />
 
                 <TextView
                     android:id="@+id/missing_reminder"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/raleway_light"
-                    android:text="Rappel manqué" />
+                    android:text="@string/missing_reminder" />
             </LinearLayout>
 
             <View

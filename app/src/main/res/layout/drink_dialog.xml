@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -24,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/raleway_medium"
-            android:text="Choose your quantity"
+            android:text="@string/choose_your_quantity"
             android:textAlignment="center"
             android:textSize="21.38sp" />
 
@@ -36,9 +35,10 @@
             android:fontFamily="@font/raleway_bold"
 
             android:inputType="number"
-            android:text="2000"
+            android:text="@string/_2000_ml"
             android:textAlignment="center"
-            android:textSize="24sp" />
+            android:textSize="24sp"
+            android:autofillHints="2000" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -53,7 +53,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0"
                 android:fontFamily="@font/raleway_bold"
-                android:text="Close"
+                android:text="@string/close"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 
@@ -64,7 +64,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0"
                 android:fontFamily="@font/raleway_bold"
-                android:text="Remove"
+                android:text="@string/remove"
                 android:textColor="@color/red"
                 android:textSize="16sp" />
 
@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0"
                 android:fontFamily="@font/raleway_bold"
-                android:text="Add"
+                android:text="@string/add"
                 android:textColor="@color/blue"
                 android:textSize="16sp" />
 

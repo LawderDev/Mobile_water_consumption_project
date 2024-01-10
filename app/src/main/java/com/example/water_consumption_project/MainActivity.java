@@ -1,22 +1,13 @@
 package com.example.water_consumption_project;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -26,11 +17,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.example.water_consumption_project.Controllers.ConsumptionController;
@@ -40,18 +26,11 @@ import com.example.water_consumption_project.Dialogs.DrinkDialog;
 import com.example.water_consumption_project.Graphics.DayHistogram;
 import com.example.water_consumption_project.Models.Reminder;
 import com.example.water_consumption_project.Models.User;
-import com.example.water_consumption_project.Services.NotificationAlarmReceiver;
-import com.example.water_consumption_project.Services.NotificationService;
 import com.example.water_consumption_project.Services.NotificationWorker;
 import com.example.water_consumption_project.Styles.MainActivityStyle;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //TO DELETE AT THE END
-        getApplicationContext().deleteDatabase("db_water_consumption");
+        //getApplicationContext().deleteDatabase("db_water_consumption");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -87,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         dayHistogram.refreshBarChart();
 
         manageNextReminder();
+        handleNotificationClick();
 
         manageDialogDrink();
         manageMenuButton();
@@ -96,15 +76,23 @@ public class MainActivity extends AppCompatActivity {
         scheduleNotificationService();
     }
 
+    private void handleNotificationClick(){
+        if (getIntent().getBooleanExtra("notification_clicked", false)) {
+            int notificationReminderId = getIntent().getIntExtra("reminder_id", -1);
+            reminderController.open();
+            reminderController.updateIsMissingById(notificationReminderId, false);
+            reminderController.close();
+        }
+    }
+
 
     private void scheduleNotificationService() {
        NotificationWorker.setWorker(this);
+       NotificationWorker.setResetNotificationsWorker(this);
     }
 
     private void checkPostPermission(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("SHOWNOTIF", "PERMISSION not granted, requesting...");
-            // Demander la permission à l'utilisateur
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE);
         }
     }
@@ -112,15 +100,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // La permission a été accordée, vous pouvez exécuter le code qui dépend de cette permission.
-                Log.d("SHOWNOTIF", "Permission granted");
-            } else {
-                // La permission a été refusée, vous pouvez informer l'utilisateur ou prendre d'autres mesures.
-                Log.d("SHOWNOTIF", "Permission denied");
-            }
-        }
     }
 
     private void manageNextReminder(){
@@ -129,13 +108,14 @@ public class MainActivity extends AppCompatActivity {
         reminderController.close();
         if (reminderList.isEmpty()){
             TextView nextReminder = findViewById(R.id.reminder_text);
-            nextReminder.setText("There is no reminder set");
+            nextReminder.setText(R.string.there_is_no_reminder_set);
             return;
         }
         Long nextTime = NotificationWorker.getNextTime(reminderList,System.currentTimeMillis());
         if (nextTime==null){
             return;
         }
+
         String selectedTime = new SimpleDateFormat("HH'h'mm").format(nextTime);
         TextView nextReminder = findViewById(R.id.reminder_text);
         String newText = getString(R.string.next_reminder_in_xh, selectedTime);

@@ -1,30 +1,19 @@
 package com.example.water_consumption_project.Services;
-
-import static android.content.Context.ALARM_SERVICE;
 import static android.content.Context.NOTIFICATION_SERVICE;
 
-import android.app.AlarmManager;
 import android.content.Context;
-
-import android.Manifest;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Handler;
-import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
+
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -39,12 +28,10 @@ import com.example.water_consumption_project.Models.User;
 import com.example.water_consumption_project.R;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class NotificationWorker extends Worker {
@@ -55,17 +42,34 @@ public class NotificationWorker extends Worker {
     @Override
     public Result doWork() {
         String channelId = "channel01";
-        Log.d("ALARMNOTIF", "GOODcreate");
         NotificationManager notificationManager = createChannel(channelId, getApplicationContext());
-        Log.d("ALARMNOTIF", "GOODSTART");
-        if(notificationManager != null) sendNotification(notificationManager, channelId, getApplicationContext());
-        Log.d("ALARMNOTIF", "GOODEND");
+        boolean isResetAction = getInputData().getBoolean("is_reset_action", false);
+        if(isResetAction){
+            resetAllNotifications();
+
+            return Result.success();
+        }
+        int reminderId = getInputData().getInt("reminder_id", -1);
+        if(notificationManager != null) sendNotification(reminderId, notificationManager, channelId, getApplicationContext());
         setWorker(getApplicationContext());
         return Result.success();
     }
 
+
+    private void resetAllNotifications(){
+        DBManagement dbManagement = DBManagement.getInstance(getApplicationContext());
+        User user = dbManagement.getUser();
+        ReminderController reminderController = dbManagement.getReminderController();
+        reminderController.open();
+        List<Reminder> reminders = reminderController.getRemindersByIdUser(user.getId());
+        for(Reminder reminder : reminders){
+            reminderController.updateIsMissingById(reminder.getId(), true);
+        }
+        reminderController.close();
+        setResetNotificationsWorker(getApplicationContext());
+    }
+
     public static void setWorker(Context context){
-        Log.d("TIME", "COUCOU");
         WorkManager workManager = WorkManager.getInstance(context);
 
         Constraints constraints = new Constraints.Builder()
@@ -78,14 +82,47 @@ public class NotificationWorker extends Worker {
             return;
         long actualTime = System.currentTimeMillis();
         Long nextTime = getNextTime(reminders, actualTime);
-        Log.d("TIME", String.valueOf(actualTime));
         if (nextTime == null) return;
-        Log.d("TIME", String.valueOf(nextTime));
-        Log.d("TIME", String.valueOf(nextTime - actualTime));
+
+        Data.Builder data = new Data.Builder();
+
+        int reminderId = getReminderIdByTime(reminders, nextTime);
+        if(reminderId == -1) return;
+        data.putInt("reminder_id", reminderId);
 
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NotificationWorker.class)
                 .setConstraints(constraints)
                 .setInitialDelay(nextTime - actualTime, TimeUnit.MILLISECONDS)
+                .setInputData(data.build())
+                .build();
+
+        workManager.enqueue(work);
+    }
+
+    public static void setResetNotificationsWorker(Context context){
+        WorkManager workManager = WorkManager.getInstance(context);
+
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                .setRequiresBatteryNotLow(false)
+                .build();
+
+        Data.Builder data = new Data.Builder();
+
+        data.putBoolean("is_reset_action", true);
+
+        long actualTime = System.currentTimeMillis();
+
+        Calendar midnightCalendar  = Calendar.getInstance();
+        midnightCalendar.add(Calendar.DAY_OF_WEEK, 1);
+        midnightCalendar.set(Calendar.HOUR, 0);
+        midnightCalendar.set(Calendar.MINUTE, 0);
+        midnightCalendar.set(Calendar.SECOND, 0);
+
+        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NotificationWorker.class)
+                .setConstraints(constraints)
+                .setInitialDelay(midnightCalendar.getTimeInMillis() - actualTime, TimeUnit.MILLISECONDS)
+                .setInputData(data.build())
                 .build();
 
         workManager.enqueue(work);
@@ -114,6 +151,16 @@ public class NotificationWorker extends Worker {
         }
 
         return nextTime;
+    }
+
+    public static int getReminderIdByTime(List<Reminder> reminders, long time){
+        for (Reminder reminder : reminders) {
+            String nextTimeString = new SimpleDateFormat("HH'h'mm").format(time);
+            if (reminder.getHour().equals(nextTimeString)) {
+                return reminder.getId();
+            }
+        }
+        return -1;
     }
 
     private static long getNextDayOfTime(long time){
@@ -145,10 +192,9 @@ public class NotificationWorker extends Worker {
         return calendar.getTimeInMillis();
     }
 
-    private void sendNotification(NotificationManager notificationManager, String channelId, Context context){
-        Log.d("ALARMNOTIF", "GOOD");
+    private void sendNotification(int reminderId, NotificationManager notificationManager, String channelId, Context context){
         int notificationId = Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.US).format(new Date()));
-        notificationManager.notify(notificationId, createBuilder(channelId, context).build());
+        notificationManager.notify(notificationId, createBuilder(reminderId, channelId, context).build());
     }
 
     private NotificationManager createChannel(String channelId, Context context){
@@ -168,15 +214,17 @@ public class NotificationWorker extends Worker {
         return null;
     }
 
-    private NotificationCompat.Builder createBuilder(String channelId, Context context){
+    private NotificationCompat.Builder createBuilder(int reminderId, String channelId, Context context){
         Intent mainIntent = new Intent(context, MainActivity.class);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        mainIntent.putExtra("notification_clicked", true);
+        mainIntent.putExtra("reminder_id", reminderId);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, mainIntent, PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.menu)
                 .setContentTitle("Don't forget to drink water !")
-                .setContentText("Keep your good habbits ! ")
+                .setContentText("Keep your good habits ! ")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);

@@ -60,7 +60,8 @@
                         android:background="@drawable/button_rounded_gradient"
                         android:src="@drawable/close_white"
                         android:textAllCaps="false"
-                        android:textColor="#FEFEFE" />
+                        android:textColor="#FEFEFE"
+                        android:contentDescription="@string/menu_button" />
 
                 </LinearLayout>
 
@@ -70,7 +71,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="15dp"
                     android:fontFamily="@font/raleway_bold"
-                    android:text="Settings"
+                    android:text="@string/settings"
                     android:textColor="#FEFEFEFE"
                     android:textSize="24sp" />
 
@@ -89,7 +90,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
                 android:fontFamily="@font/raleway_medium"
-                android:text="Water consumption target"
+                android:text="@string/water_consumption_target"
                 android:textAlignment="center"
                 android:textSize="21.38sp" />
 
@@ -112,7 +113,7 @@
                 android:layout_marginBottom="15sp"
                 android:background="@drawable/button_gradient"
                 android:gravity="center"
-                android:text="Edit"
+                android:text="@string/edit"
                 android:textAllCaps="false"
                 android:textColor="#FEFEFE" />
 
@@ -139,7 +140,7 @@
                 android:layout_marginStart="29dp"
                 android:layout_marginBottom="16dp"
                 android:fontFamily="@font/raleway_bold"
-                android:text="Reminders :"
+                android:text="@string/reminders"
                 android:textSize="21.38sp" />
 
             <LinearLayout
@@ -147,8 +148,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
-                <include layout="@layout/reminder_box"></include>
 
 
             </LinearLayout>
@@ -163,7 +162,8 @@
                 android:textAllCaps="false"
                 android:layout_gravity="center"
 
-                android:textColor="#FEFEFE" />
+                android:textColor="#FEFEFE"
+                android:contentDescription="@string/add_reminder_button" />
 
         </LinearLayout>
 

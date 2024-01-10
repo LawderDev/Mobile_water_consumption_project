@@ -8,8 +8,6 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
-
 import com.example.water_consumption_project.Controllers.UserController;
 import com.example.water_consumption_project.DataBase.DBManagement;
 import com.example.water_consumption_project.R;

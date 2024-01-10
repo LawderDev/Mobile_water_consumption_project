@@ -33,7 +33,8 @@
                 android:gravity="center"
                 android:src="@drawable/menu"
                 android:textAllCaps="false"
-                android:textColor="#FEFEFE" />
+                android:textColor="#FEFEFE"
+                android:contentDescription="@string/menu_button" />
 
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/bell_button"
@@ -66,7 +67,7 @@
                 android:fontFamily="@font/raleway_light"
                 android:text="@string/water_is_your_new_best_friend"
                 android:textAlignment="center"
-                android:textSize="20dp" />
+                android:textSize="20sp" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -158,8 +159,7 @@
             <com.github.mikephil.charting.charts.BarChart
                 android:id="@+id/chart1"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_above="@+id/seekBar1" />
+                android:layout_height="match_parent" />
 
         </LinearLayout>
     </LinearLayout>

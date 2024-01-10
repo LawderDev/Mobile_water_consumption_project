@@ -5,7 +5,6 @@ import static java.util.Calendar.SHORT;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 
 import com.example.water_consumption_project.Controllers.ConsumptionController;
 import com.example.water_consumption_project.DataBase.DBManagement;
