@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -87,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void scheduleNotificationService() {
-       NotificationWorker.setWorker(this);
        NotificationWorker.setResetNotificationsWorker(this);
     }
 

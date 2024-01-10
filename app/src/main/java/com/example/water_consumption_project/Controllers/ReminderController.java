@@ -16,12 +16,12 @@ public class ReminderController extends DBWaterConsumption {
         super(context);
     }
 
-    public void insertReminder(int idUser, String hour, boolean isMissing) {
+    public long insertReminder(int idUser, String hour, boolean isMissing) {
         ContentValues values = new ContentValues();
         values.put("idUser", idUser);
         values.put("hour", hour);
         values.put("isMissing", String.valueOf(isMissing));
-        db.insert("Reminder", null, values);
+        return db.insert("Reminder", null, values);
     }
 
     public List<Reminder> getRemindersByIdUser(int idUser) {

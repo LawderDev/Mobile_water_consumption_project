@@ -41,22 +41,22 @@ public class NotificationWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        String channelId = "channel01";
-        NotificationManager notificationManager = createChannel(channelId, getApplicationContext());
         boolean isResetAction = getInputData().getBoolean("is_reset_action", false);
+        Context context = getApplicationContext();
         if(isResetAction){
-            resetAllNotifications();
-
+            resetAllNotifications(context);
             return Result.success();
         }
         int reminderId = getInputData().getInt("reminder_id", -1);
-        if(notificationManager != null) sendNotification(reminderId, notificationManager, channelId, getApplicationContext());
-        setWorker(getApplicationContext());
+        String channelId = "channel01";
+
+        NotificationManager notificationManager = createChannel(channelId, context);
+        if(notificationManager != null) sendNotification(reminderId, notificationManager, channelId, context);
         return Result.success();
     }
 
 
-    private void resetAllNotifications(){
+    private void resetAllNotifications(Context context){
         DBManagement dbManagement = DBManagement.getInstance(getApplicationContext());
         User user = dbManagement.getUser();
         ReminderController reminderController = dbManagement.getReminderController();
@@ -64,12 +64,13 @@ public class NotificationWorker extends Worker {
         List<Reminder> reminders = reminderController.getRemindersByIdUser(user.getId());
         for(Reminder reminder : reminders){
             reminderController.updateIsMissingById(reminder.getId(), true);
+            setWorker(context, reminder);
         }
         reminderController.close();
-        setResetNotificationsWorker(getApplicationContext());
+        setResetNotificationsWorker(context);
     }
 
-    public static void setWorker(Context context){
+    public static void setWorker(Context context, Reminder reminder){
         WorkManager workManager = WorkManager.getInstance(context);
 
         Constraints constraints = new Constraints.Builder()
@@ -77,22 +78,15 @@ public class NotificationWorker extends Worker {
                 .setRequiresBatteryNotLow(false)
                 .build();
 
-        List<Reminder> reminders = getReminders(context);
-        if (reminders.isEmpty())
-            return;
         long actualTime = System.currentTimeMillis();
-        Long nextTime = getNextTime(reminders, actualTime);
-        if (nextTime == null) return;
 
         Data.Builder data = new Data.Builder();
 
-        int reminderId = getReminderIdByTime(reminders, nextTime);
-        if(reminderId == -1) return;
-        data.putInt("reminder_id", reminderId);
+        data.putInt("reminder_id", reminder.getId());
 
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NotificationWorker.class)
                 .setConstraints(constraints)
-                .setInitialDelay(nextTime - actualTime, TimeUnit.MILLISECONDS)
+                .setInitialDelay(getMillisByStringHour(reminder.getHour()) - actualTime, TimeUnit.MILLISECONDS)
                 .setInputData(data.build())
                 .build();
 
@@ -194,7 +188,7 @@ public class NotificationWorker extends Worker {
 
     private void sendNotification(int reminderId, NotificationManager notificationManager, String channelId, Context context){
         int notificationId = Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.US).format(new Date()));
-        notificationManager.notify(notificationId, createBuilder(reminderId, channelId, context).build());
+        notificationManager.notify(notificationId, createBuilder(notificationId, reminderId, channelId, context).build());
     }
 
     private NotificationManager createChannel(String channelId, Context context){
@@ -204,8 +198,6 @@ public class NotificationWorker extends Worker {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(channelId, name, importance);
             channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this.
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
             assert notificationManager != null;
             notificationManager.createNotificationChannel(channel);
@@ -214,12 +206,12 @@ public class NotificationWorker extends Worker {
         return null;
     }
 
-    private NotificationCompat.Builder createBuilder(int reminderId, String channelId, Context context){
+    private NotificationCompat.Builder createBuilder(int notificationId, int reminderId, String channelId, Context context){
         Intent mainIntent = new Intent(context, MainActivity.class);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         mainIntent.putExtra("notification_clicked", true);
         mainIntent.putExtra("reminder_id", reminderId);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, mainIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationId, mainIntent, PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.menu)

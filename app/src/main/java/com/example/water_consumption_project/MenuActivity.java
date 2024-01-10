@@ -31,18 +31,20 @@ public class MenuActivity extends AppCompatActivity {
     ReminderController reminderController;
     DBManagement dbManagement;
     TargetDialog dialog;
+    ImageButton reminderAddButton;
     User user;
     TextView targetConsumptionText;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
+        reminderAddButton = findViewById(R.id.add_reminder_button);
 
         dbManagement = DBManagement.getInstance(getApplicationContext());
         user = dbManagement.getUser();
         userController = dbManagement.getUserController();
         reminderController = dbManagement.getReminderController();
 
-        getReminder();
+        getReminders();
 
         targetConsumptionText = findViewById(R.id.target_settings_value);
 
@@ -51,8 +53,6 @@ public class MenuActivity extends AppCompatActivity {
 
         ImageButton closeButton = findViewById(R.id.menu_button);
         Button editButton = findViewById(R.id.drink_button);
-
-        ImageButton reminderAddButton = findViewById(R.id.add_reminder_button);
 
         reminderAddButton.setOnClickListener((v) -> {
             showTimePickerDialog();
@@ -96,11 +96,10 @@ public class MenuActivity extends AppCompatActivity {
                         // Format de l'heure choisie en "hhmm"
                         String selectedTime = new SimpleDateFormat("HH'h'mm").format(calendar.getTime());
                         reminderController.open();
-                        reminderController.insertReminder(user.getId(),selectedTime, true);
+                        long idAdd = reminderController.insertReminder(user.getId(),selectedTime, true);
                         reminderController.close();
-                        getReminder();
-                        NotificationWorker.setWorker(getApplicationContext());
-
+                        getReminders();
+                        NotificationWorker.setWorker(getApplicationContext(), new Reminder((int) idAdd, user.getId(), selectedTime, true));
                     }
                 }, currentHour, currentMinute, false);
 
@@ -110,9 +109,11 @@ public class MenuActivity extends AppCompatActivity {
     private void initTargetConsumptionText(){
         targetConsumptionText.setText(String.format(getString(R.string.menu_target_value), user.getTargetConsumption()));
     }
-    private void getReminder(){
+
+    private void getReminders(){
         reminderController.open();
         List<Reminder> reminderList = reminderController.getRemindersByIdUser(user.getId());
+        reminderAddButton.setVisibility(reminderList.size() == 7 ? View.GONE : View.VISIBLE);
         reminderController.close();
         LinearLayout reminderBloc = findViewById(R.id.reminder_bloc);
         reminderBloc.removeAllViews();
@@ -124,12 +125,12 @@ public class MenuActivity extends AppCompatActivity {
             reminderBloc.addView(reminderBox);
             View reminderRemove = reminderBox.findViewById(R.id.x_1);
             reminderRemove.setOnClickListener(v -> {
-            reminderBloc.removeView(reminderBox);
-            reminderController.open();
-            reminderController.removeReminderById(reminder.getId());
-            reminderController.close();
-            NotificationWorker.setWorker(getApplicationContext());}
-            );
+                reminderBloc.removeView(reminderBox);
+                reminderController.open();
+                reminderController.removeReminderById(reminder.getId());
+                reminderController.close();
+                reminderAddButton.setVisibility(reminderList.size() - 1 == 7 ? View.GONE : View.VISIBLE);
+            });
         }
 
     }
