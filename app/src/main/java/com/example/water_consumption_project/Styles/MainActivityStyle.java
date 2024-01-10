@@ -2,6 +2,7 @@ package com.example.water_consumption_project.Styles;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.text.Spannable;
@@ -25,12 +26,19 @@ public class MainActivityStyle {
         this.mainActivity = mainActivity;
     }
     public void stylizingApp () {
-        // Get the TextView
         TextView welcomeText = mainActivity.findViewById(R.id.welcome_user_text);
         TextView monitoringConsumptionText = mainActivity.findViewById(R.id.monitoring_consumption_text);
 
-        applyTextBold(welcomeText, R.string.welcome_user, 8, 12);
-        applyTextBold(monitoringConsumptionText, R.string.monitoring_of_consumption, 14, 25);
+        Configuration config = mainActivity.getApplicationContext().getResources().getConfiguration();
+        if(config.getLocales().get(0).getLanguage().equals("fr")){
+            applyTextBold(welcomeText, R.string.welcome_user, 10, 14);
+            applyTextBold(monitoringConsumptionText, R.string.monitoring_of_consumption, 12, 25);
+        }else {
+            applyTextBold(welcomeText, R.string.welcome_user, 8, 12);
+            applyTextBold(monitoringConsumptionText, R.string.monitoring_of_consumption, 14, 25);
+        }
+
+
     }
 
     private void applyTextBold(TextView textView, int textResId, int start, int end) {

@@ -214,7 +214,7 @@ public class NotificationWorker extends Worker {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationId, mainIntent, PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.menu)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Don't forget to drink water !")
                 .setContentText("Keep your good habits ! ")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)

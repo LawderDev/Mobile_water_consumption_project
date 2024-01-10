@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -49,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //TO DELETE AT THE END
-        //getApplicationContext().deleteDatabase("db_water_consumption");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

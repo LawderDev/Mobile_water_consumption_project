@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Projet_de_consommation_d_eau</string>
+    <string name="monitoring_of_consumption">Suivi de la consommation :</string>
+    <string name="drink">Boire !</string>
+    <string name="next_reminder_in_xh">Le prochain rappel est dans %1$s</string>
+    <string name="consumption">%1$d ml</string>
+    <string name="target">/ %1$d ml</string>
+    <string name="water_is_your_new_best_friend">\"L\'eau est votre nouveau meilleure amie\"</string>
+    <string name="welcome_user">Bienvenue User !</string>
+    <string name="menu_target_value">%1$d ml</string>
+    <string name="there_is_no_reminder_set">Il n\'y a pas de rappel</string>
+    <string name="reminder_of">Rappel de %1$s</string>
+    <string name="menu_button">Bouton de menu</string>
+    <string name="settings">Paramètres</string>
+    <string name="water_consumption_target">Objectif de consommation d\'eau</string>
+    <string name="edit">Editer</string>
+    <string name="reminders">Rappels :</string>
+    <string name="add_reminder_button">Ajouter un bouton de rappel</string>
+    <string name="notifications">Notifications</string>
+    <string name="choose_your_quantity">Choisissez votre quantité</string>
+    <string name="_2000_ml">2000</string>
+    <string name="close">Fermer</string>
+    <string name="remove">Retirer</string>
+    <string name="add">Ajouter</string>
+    <string name="missing_reminder">Rappel manquant</string>
+    <string name="new_reminder">Nouveau rappel</string>
+    <string name="choose_your_target">Choisissez votre cible</string>
+</resources>
